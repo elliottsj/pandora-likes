@@ -1,0 +1,37 @@
+{
+    "manifest_version": 2,
+
+    "name": "Pandora Likes",
+    "description": "Allows you to see all of the songs you have thumbed-up in Pandora Radio.",
+    "version": "1.0",
+
+    "background": {
+        "scripts": ["assets/javascripts/jquery-2.0.3.min.js", "background.js"]
+        // "persistent": false
+    },
+    "content_scripts": [
+        {
+            "matches": ["http://www.pandora.com/*", "https://www.pandora.com/*"],
+            // "css": ["style.css"],
+            "js": ["assets/javascripts/jquery-2.0.3.min.js", "assets/javascripts/contentscript.js"]
+        }
+    ],
+    "permissions": [
+        "storage",
+        "tabs",
+        "webRequest",
+        "http://www.pandora.com/",
+        "https://www.pandora.com/"
+    ],
+    "page_action": {
+        "default_icon": {
+          "19": "icon19.png"
+          //, "38": "icon38.png"
+        },
+        "default_title": "Pandora Likes",
+        "default_popup": "views/popup.html"
+    },
+    "web_accessible_resources": [
+        "assets/javascripts/jquery-2.0.3.min.map"
+    ]
+}

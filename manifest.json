@@ -3,7 +3,7 @@
 
     "name": "Pandora Likes",
     "description": "Allows you to see all of the songs you have thumbed-up in Pandora Radio.",
-    "version": "1.0",
+    "version": "0.1.0",
 
     "background": {
         "scripts": ["assets/javascripts/jquery-2.0.3.min.js", "background.js"]

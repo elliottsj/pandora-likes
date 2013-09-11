@@ -78,13 +78,12 @@ function likesApiUrl(category, startIndex, username) {
  */
 function getLikes(category, username) {
   var deferred = $.Deferred();
-  var jqXHRs = [];
 
   var likes = [];
 
-  for (var i = 0; i < 30; i += (i < 10 ? 5 : 10)) {
-    console.log("Fetching data from " + likesApiUrl(category, i, username));
-    var jqXHR = $.ajax(likesApiUrl(category, i, username), { cache: false }).done(function (data) {
+  function fetchData(index) {
+    console.log("Fetching data from " + likesApiUrl(category, index, username));
+    $.ajax(likesApiUrl(category, index, username), { cache: false }).done(function (data) {
       var $infobox = $($.parseHTML(data)).filter(".section").find(".infobox-body");
 
       $infobox.each(function () {
@@ -92,7 +91,7 @@ function getLikes(category, username) {
           var $a = $(element).find("a");
           return {
             text: $a.text(),
-            href: $a.attr("href")
+            href: "http://www.pandora.com" + $a.attr("href")
           }
         });
 
@@ -117,13 +116,23 @@ function getLikes(category, username) {
           });
         }
       });
+
+      // Notify progress by passing the number of likes fetched
+      deferred.notify(likes.length);
+
+      if (index < 10 && $infobox.length == 5) {
+        fetchData(index + 5);
+      } else if (index >= 10 && $infobox.length == 10) {
+        fetchData(index + 10);
+      } else {
+        deferred.resolve(likes);
+      }
+
     });
-    jqXHRs.push(jqXHR);
   }
 
-  $.when.apply(null, jqXHRs).done(function () {
-    deferred.resolve(likes);
-  });
+  // Fetch 'like' data, starting at index 0
+  fetchData(0);
 
   return deferred.promise();
 }
@@ -133,6 +142,7 @@ function getLikes(category, username) {
  * Respond to requests for username and likes
  */
 
+// One-time requests; progress for loading likes is not messaged
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.type == "username") {
     getUsernameFromStorage().done(function (username) {
@@ -147,4 +157,20 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     });
     return true;
   }
+});
+
+// Persistent requests; progress for likes is messaged
+chrome.runtime.onConnect.addListener(function (port) {
+  port.onMessage.addListener(function (message) {
+    if (message.type == "likes") {
+      getUsernameFromStorage().then(function (username) {
+        return getLikes(message.category, username);
+      }).progress(function (likesLoaded) {
+        port.postMessage({ type: "progress", value: likesLoaded });
+      }).then(function (likes) {
+        port.postMessage({ type: "result", value: likes });
+      });
+    }
+  });
+
 });
